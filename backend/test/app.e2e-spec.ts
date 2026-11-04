@@ -6,6 +6,7 @@ import { AppModule } from "../src/app.module";
 import { BikeEntity } from "../src/bikes/entities/bike.entity";
 import { configureApp } from "../src/configure-app";
 import type { PurchasedBikeSellResponseDto } from "../src/customers/dto/bike-sell-response.dto";
+import type { BikeResponseDto } from "../src/bikes/dto/bike-response.dto";
 import type { CustomerResponseDto } from "../src/customers/dto/customer-response.dto";
 import type { CustomersPageResponseDto } from "../src/customers/dto/customers-page-response.dto";
 import { BikeSellEntity } from "../src/customers/entities/bike-sell.entity";
@@ -289,9 +290,156 @@ describe("Bike shop API", () => {
     expect(await database.getRepository(BikeEntity).count()).toBe(4);
   });
 
-  it("exposes no bike catalogue routes or Hello World route", async () => {
-    await request(app.getHttpServer()).get("/bikes").expect(404);
-    await request(app.getHttpServer()).post("/bikes").send({}).expect(404);
+  it("paginates customers with default and explicit parameters", async () => {
+    const server = app.getHttpServer();
+    const first = await request(server).get("/customers").expect(200);
+    expect(first.body).toEqual({
+      totalCount: 3,
+      customers: expect.any(Array) as unknown,
+    });
+    expect(
+      (first.body as CustomersPageResponseDto).customers.map(
+        (item) => item.lastName,
+      ),
+    ).toEqual(["Bernard", "Durand", "Martin"]);
+    const second = await request(server)
+      .get("/customers?page=2&limit=2")
+      .expect(200);
+    expect(second.body).toMatchObject({ totalCount: 3 });
+    expect(
+      (second.body as CustomersPageResponseDto).customers.map(
+        (item) => item.lastName,
+      ),
+    ).toEqual(["Martin"]);
+    await request(server)
+      .get("/customers?page=5&limit=2")
+      .expect(200, { totalCount: 3, customers: [] });
+    await request(server).get("/customers?limit=50").expect(200);
+  });
+
+  it.each([
+    "page=0",
+    "page=-1",
+    "page=1.5",
+    "page=abc",
+    "page=",
+    "limit=0",
+    "limit=51",
+    "limit=2.5",
+    "unknown=1",
+  ])("rejects invalid pagination %s with 400", async (query) => {
+    await request(app.getHttpServer()).get(`/customers?${query}`).expect(400);
+    await request(app.getHttpServer()).get(`/bikes?${query}`).expect(400);
+  });
+
+  const validBike = {
+    brand: "  Lumen  ",
+    model: "Gravel 7",
+    description: "Vélo gravel polyvalent.",
+    category: "gravel",
+    frameMaterial: "steel",
+    frameSizeCm: 54.5,
+    wheelSizeInches: 28,
+    gearCount: 11,
+    weightKg: 10.2,
+    electric: false,
+    priceCents: 159900,
+  };
+
+  it("creates, lists, reads, updates and deletes a bike", async () => {
+    const server = app.getHttpServer();
+    const created = await request(server)
+      .post("/bikes")
+      .send(validBike)
+      .expect(201);
+    const bike = created.body as BikeResponseDto;
+    expect(bike).toEqual({ ...validBike, brand: "Lumen", id: bike.id });
+    expect(bike.id).toMatch(/^[0-9a-f-]{36}$/);
+    await request(server).get(`/bikes/${bike.id}`).expect(200, bike);
+    const list = await request(server).get("/bikes?limit=2").expect(200);
+    expect(list.body).toMatchObject({ totalCount: 5 });
+    expect(
+      (list.body as { bikes: BikeResponseDto[] }).bikes.map(
+        (item) => `${item.brand} ${item.model}`,
+      ),
+    ).toEqual(["Cyclane Road 300", "Cyclane Urban E"]);
+    await request(server)
+      .get("/bikes?page=9")
+      .expect(200, { totalCount: 5, bikes: [] });
+    const patched = await request(server)
+      .patch(`/bikes/${bike.id}`)
+      .send({ priceCents: 149900, electric: true })
+      .expect(200);
+    expect(patched.body).toEqual({
+      ...bike,
+      priceCents: 149900,
+      electric: true,
+    });
+    const removed = await request(server)
+      .delete(`/bikes/${bike.id}`)
+      .expect(204);
+    expect(removed.text).toBe("");
+    await request(server).get(`/bikes/${bike.id}`).expect(404);
+  });
+
+  it("validates bike input, unknown fields and empty patches", async () => {
+    const server = app.getHttpServer();
+    const invalid: Record<string, unknown>[] = [
+      { brand: "" },
+      { brand: "   " },
+      { model: 12 },
+      { frameSizeCm: 0 },
+      { wheelSizeInches: -26 },
+      { gearCount: 1.5 },
+      { gearCount: 0 },
+      { weightKg: "10" },
+      { electric: "yes" },
+      { priceCents: -1 },
+      { priceCents: 10.5 },
+      { brand: null },
+      { color: "red" },
+    ];
+    for (const change of invalid) {
+      await request(server)
+        .post("/bikes")
+        .send({ ...validBike, ...change })
+        .expect(400);
+      await request(server)
+        .patch(`/bikes/${fixtureIds.bikes[0]}`)
+        .send(change)
+        .expect(400);
+    }
+    const { priceCents: _priceCents, ...withoutPrice } = validBike;
+    await request(server).post("/bikes").send(withoutPrice).expect(400);
+    await request(server)
+      .patch(`/bikes/${fixtureIds.bikes[0]}`)
+      .send({})
+      .expect(400);
+    expect(await database.getRepository(BikeEntity).count()).toBe(4);
+  });
+
+  it("validates UUIDs and reports missing bikes on every route", async () => {
+    const server = app.getHttpServer();
+    await request(server).get("/bikes/not-a-uuid").expect(400);
+    await request(server).get(`/bikes/${missingId}`).expect(404);
+    await request(server)
+      .patch(`/bikes/${missingId}`)
+      .send({ brand: "Ghost" })
+      .expect(404);
+    await request(server).delete(`/bikes/${missingId}`).expect(404);
+  });
+
+  it("refuses with 409 to delete a sold bike and keeps its sales", async () => {
+    const server = app.getHttpServer();
+    await request(server).delete(`/bikes/${bikeId}`).expect(409);
+    await request(server).get(`/bikes/${bikeId}`).expect(200);
+    expect(await database.getRepository(BikeSellEntity).count()).toBe(4);
+    const unsold = fixtureIds.bikes[3];
+    await request(server).delete(`/bikes/${unsold}`).expect(204);
+    expect(await database.getRepository(BikeEntity).count()).toBe(3);
+  });
+
+  it("exposes no Hello World route", async () => {
     await request(app.getHttpServer()).get("/").expect(404);
   });
 });
