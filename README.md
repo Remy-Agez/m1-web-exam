@@ -1,3 +1,36 @@
+# Examen Technologies Web — Rémy Agez (M1 ISEN)
+
+Rendu de l’examen réalisé sur la base de code fournie (magasin de vélos).
+Le sujet d’origine et la mise en route sont plus bas.
+
+## Ce qui a été fait
+
+| Exercice | API (NestJS) | Interface (React) |
+| --- | --- | --- |
+| 1 — Clients | `GET /customers` paginé | liste des clients paginée |
+| 2 — Vélos | CRUD complet sur `/bikes` | catalogue : liste paginée, détail, ajout, modification, suppression avec confirmation |
+
+**Pagination** : `?page=1&limit=10` (valeurs par défaut, `limit` entre 1 et 50).
+La réponse contient le total et la page demandée : `{ totalCount, customers }` ou `{ totalCount, bikes }`.
+
+| Méthode | Route | Codes de retour |
+| --- | --- | --- |
+| `GET` | `/bikes?page=&limit=` | 200, 400 |
+| `POST` | `/bikes` | 201, 400 |
+| `GET` | `/bikes/:id` | 200, 400 (UUID invalide), 404 |
+| `PATCH` | `/bikes/:id` | 200, 400, 404 |
+| `DELETE` | `/bikes/:id` | 204, 404, 409 (vélo déjà vendu) |
+
+## Tests
+
+```bash
+cd backend
+npm test          # tests unitaires
+npm run test:e2e  # tests de bout en bout sur une base SQLite en mémoire
+```
+
+---
+
 english version below
 
 # Magasin de vélos — Base de code pour l’examen
@@ -17,7 +50,7 @@ Il se compose de deux parties :
 Dans un terminal :
 
 ```bash
-git clone https://github.com/Iberos/m1-web-exam.git
+git clone https://github.com/Remy-Agez/m1-web-exam.git
 cd m1-web-exam
 ```
 
@@ -84,7 +117,7 @@ It consists of two parts:
 In a terminal:
 
 ```bash
-git clone https://github.com/Iberos/m1-web-exam.git
+git clone https://github.com/Remy-Agez/m1-web-exam.git
 cd m1-web-exam
 ```
 
