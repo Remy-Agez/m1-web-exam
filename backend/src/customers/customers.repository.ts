@@ -2,6 +2,10 @@ import { Injectable } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { DataSource, QueryFailedError } from "typeorm";
 import { BikeEntity } from "../bikes/entities/bike.entity";
+import type {
+  PageModel,
+  PaginationModel,
+} from "../shared/models/pagination.model";
 import { BikeSellEntity } from "./entities/bike-sell.entity";
 import { CustomerEntity } from "./entities/customer.entity";
 import type {
@@ -25,11 +29,21 @@ import type { PurchasedBikeModel } from "./models/purchased-bike.model";
 export class CustomersRepository {
   constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
-  async findAll(): Promise<CustomerModel[]> {
-    const entities = await this.dataSource
+  async findAll({
+    page,
+    limit,
+  }: PaginationModel): Promise<PageModel<CustomerModel>> {
+    const [entities, totalCount] = await this.dataSource
       .getRepository(CustomerEntity)
-      .find({ order: { lastName: "ASC", firstName: "ASC", id: "ASC" } });
-    return entities.map((entity) => this.toCustomerModel(entity));
+      .findAndCount({
+        order: { lastName: "ASC", firstName: "ASC", id: "ASC" },
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+    return {
+      totalCount,
+      items: entities.map((entity) => this.toCustomerModel(entity)),
+    };
   }
 
   async findById(id: string): Promise<CustomerModel | null> {
