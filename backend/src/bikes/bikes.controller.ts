@@ -13,7 +13,8 @@ import {
 } from "@nestjs/common";
 import { PaginationQueryDto } from "../shared/dto/pagination-query.dto";
 import { BikesService } from "./bikes.service";
-import { BikeResponseDto, BikesPageResponseDto } from "./dto/bike-response.dto";
+import { BikeResponseDto } from "./dto/bike-response.dto";
+import { BikesPageResponseDto } from "./dto/bikes-page-response.dto";
 import { CreateBikeDto } from "./dto/create-bike.dto";
 import { UpdateBikeDto } from "./dto/update-bike.dto";
 import type { CreateBikeModel, UpdateBikeModel } from "./models/bike.model";
