@@ -9,8 +9,15 @@ import { BikeFormButton } from "./BikeFormButton";
 import { BikeListItem } from "./BikeListItem";
 
 export const BikesList = () => {
-  const { bikes, totalCount, createBike, deleteBike, isLoading, load } =
-    useBikesProvider();
+  const {
+    bikes,
+    totalCount,
+    createBike,
+    deleteBike,
+    isLoading,
+    hasError,
+    load,
+  } = useBikesProvider();
   const [page, setPage] = useState<number>(1);
 
   useEffect(() => {
@@ -33,6 +40,8 @@ export const BikesList = () => {
       <BikeFormButton saveBike={onCreate} />
       {isLoading ? (
         <Skeleton />
+      ) : hasError ? (
+        <Empty description="The bikes could not be loaded, please try again later" />
       ) : bikes.length === 0 ? (
         <Empty description="No bikes in the catalogue yet" />
       ) : (

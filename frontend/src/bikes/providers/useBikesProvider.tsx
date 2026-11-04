@@ -12,9 +12,11 @@ export const useBikesProvider = () => {
   const [bikes, setBikes] = useState<BikeModel[]>([]);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [hasError, setHasError] = useState<boolean>(false);
 
   const load = (page: number) => {
     setIsLoading(true);
+    setHasError(false);
     axios
       .get<BikesPageModel>("http://localhost:3000/bikes", {
         params: { page, limit: BIKES_PAGE_SIZE },
@@ -23,6 +25,7 @@ export const useBikesProvider = () => {
         setBikes(result.data.bikes);
         setTotalCount(result.data.totalCount);
       })
+      .catch(() => setHasError(true))
       .finally(() => {
         setIsLoading(false);
       });
@@ -36,5 +39,13 @@ export const useBikesProvider = () => {
   const deleteBike = (id: string) =>
     axios.delete(`http://localhost:3000/bikes/${id}`).then(() => {});
 
-  return { bikes, totalCount, load, isLoading, createBike, deleteBike };
+  return {
+    bikes,
+    totalCount,
+    load,
+    isLoading,
+    hasError,
+    createBike,
+    deleteBike,
+  };
 };
