@@ -3,42 +3,59 @@ import { useState } from "react";
 import type {
   CreateCustomerModel,
   CustomerModel,
+  CustomersPageModel,
 } from "../models/CustomerModel";
+
+export const CUSTOMERS_PAGE_SIZE = 10;
 
 export const useCustomersProvider = () => {
   const [customers, setCustomers] = useState<CustomerModel[]>([]);
+  const [totalCount, setTotalCount] = useState<number>(0);
+  const [page, setPage] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const load = () => {
+  const load = (requestedPage: number = page) => {
     setIsLoading(true);
     axios
-      .get("http://localhost:3000/customers")
-      .then((result) => setCustomers(result.data))
-      .finally(() => {
+      .get<CustomersPageModel>("http://localhost:3000/customers", {
+        params: { page: requestedPage, limit: CUSTOMERS_PAGE_SIZE },
+      })
+      .then((result) => {
+        const lastPage = Math.max(
+          1,
+          Math.ceil(result.data.totalCount / CUSTOMERS_PAGE_SIZE),
+        );
+        // The page became empty (e.g. after deleting its last customer): show the new last page
+        if (requestedPage > lastPage) {
+          load(lastPage);
+          return;
+        }
+        setPage(requestedPage);
+        setCustomers(result.data.customers);
+        setTotalCount(result.data.totalCount);
         setIsLoading(false);
-      });
+      })
+      .catch(() => setIsLoading(false));
   };
 
+  // Deleting changes the page content and the total: reload the current page
   const deleteCustomer = (id: string) => {
-    axios.delete(`http://localhost:3000/customers/${id}`).then(() => {
-      setCustomers((prev) => prev.filter((customer) => customer.id !== id));
-    });
+    axios.delete(`http://localhost:3000/customers/${id}`).then(() => load());
   };
 
   // Returns the request so the caller can react to errors (e.g. email already in use)
   const createCustomer = (input: CreateCustomerModel) =>
     axios
       .post<CustomerModel>("http://localhost:3000/customers", input)
-      .then((result) => {
-        // Keep the same order as the backend: last name, then first name
-        setCustomers((prev) =>
-          [...prev, result.data].sort(
-            (a, b) =>
-              a.lastName.localeCompare(b.lastName) ||
-              a.firstName.localeCompare(b.firstName),
-          ),
-        );
-      });
+      .then(() => load());
 
-  return { customers, load, isLoading, deleteCustomer, createCustomer };
+  return {
+    customers,
+    totalCount,
+    page,
+    load,
+    isLoading,
+    deleteCustomer,
+    createCustomer,
+  };
 };
