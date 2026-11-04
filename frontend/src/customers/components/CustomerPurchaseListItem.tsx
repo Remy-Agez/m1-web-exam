@@ -5,18 +5,13 @@ import {
 } from "@ant-design/icons";
 import { Col, Skeleton, Space } from "antd";
 import { ListItem } from "../../shared/components/ListItem";
+import { formatPrice } from "../../shared/formatPrice";
 import type { PurchaseModel } from "../models/PurchaseModel";
 
 interface CustomerPurchaseListItemProps {
   // No purchase means it is still loading: the row keeps its shape with placeholders
   purchase?: PurchaseModel;
 }
-
-const formatPrice = (cents: number) =>
-  (cents / 100).toLocaleString(undefined, {
-    style: "currency",
-    currency: "EUR",
-  });
 
 const formatDate = (date: string) =>
   new Date(date).toLocaleDateString(undefined, { dateStyle: "medium" });
