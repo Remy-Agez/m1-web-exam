@@ -2,9 +2,6 @@ english version below
 
 # Magasin de vélos — Base de code pour l’examen
 
-Ce projet sert de base à un examen de développement web. Il propose une application
-de gestion d’un magasin de vélos, avec des clients, un catalogue de vélos et des ventes.
-
 Il se compose de deux parties :
 
 - `backend` : une API REST développée avec NestJS et TypeORM, utilisant une base SQLite locale.
@@ -71,9 +68,6 @@ Pour arrêter les applications, utiliser `Ctrl+C` dans chacun des deux terminaux
 ---
 
 # Bike shop — Exam codebase
-
-This project provides a starting codebase for a web development exam. It includes
-a bike shop management application with customers, a bike catalog, and sales.
 
 It consists of two parts:
 
