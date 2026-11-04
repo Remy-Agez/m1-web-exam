@@ -54,8 +54,9 @@ export const BikesList = () => {
         pageSize={BIKES_PAGE_SIZE}
         total={totalCount}
         showSizeChanger={false}
-        hideOnSinglePage
+        showTotal={(total) => `${total} bikes`}
         onChange={setPage}
+        disabled={isLoading}
       />
     </Space>
   );
