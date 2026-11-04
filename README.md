@@ -1,7 +1,7 @@
 # Examen Technologies Web — Rémy Agez (M1 ISEN)
 
 Rendu de l’examen réalisé sur la base de code fournie (magasin de vélos).
-Le sujet d’origine et la mise en route sont plus bas.
+La mise en route (installation, base de données, démarrage) est plus bas.
 
 ## Ce qui a été fait
 
