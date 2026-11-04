@@ -13,9 +13,11 @@ export const useCustomersProvider = () => {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [page, setPage] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [hasError, setHasError] = useState<boolean>(false);
 
   const load = (requestedPage: number = page) => {
     setIsLoading(true);
+    setHasError(false);
     axios
       .get<CustomersPageModel>("http://localhost:3000/customers", {
         params: { page: requestedPage, limit: CUSTOMERS_PAGE_SIZE },
@@ -35,7 +37,10 @@ export const useCustomersProvider = () => {
         setTotalCount(result.data.totalCount);
         setIsLoading(false);
       })
-      .catch(() => setIsLoading(false));
+      .catch(() => {
+        setHasError(true);
+        setIsLoading(false);
+      });
   };
 
   // Deleting changes the page content and the total: reload the current page
@@ -55,6 +60,7 @@ export const useCustomersProvider = () => {
     page,
     load,
     isLoading,
+    hasError,
     deleteCustomer,
     createCustomer,
   };

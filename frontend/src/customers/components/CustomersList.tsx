@@ -1,4 +1,4 @@
-import { Pagination, Skeleton, Space } from "antd";
+import { Empty, Pagination, Skeleton, Space } from "antd";
 import { useEffect } from "react";
 import {
   CUSTOMERS_PAGE_SIZE,
@@ -15,6 +15,7 @@ export const CustomersList = () => {
     deleteCustomer,
     createCustomer,
     isLoading,
+    hasError,
     load,
   } = useCustomersProvider();
 
@@ -27,6 +28,8 @@ export const CustomersList = () => {
       <AddCustomerButton createCustomer={createCustomer} />
       {isLoading ? (
         <Skeleton />
+      ) : hasError ? (
+        <Empty description="The customers could not be loaded, please try again later" />
       ) : (
         customers.map((customer) => (
           <CustomerListItem
