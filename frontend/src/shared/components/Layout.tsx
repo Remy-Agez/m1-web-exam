@@ -32,7 +32,8 @@ export const Layout = () => {
           <Col>
             <Title style={{ margin: 0 }}>Bikez.ai</Title>
           </Col>
-          <Col>
+          {/* Takes the remaining width so every menu entry stays visible */}
+          <Col flex="auto">
             <AppMenu />
           </Col>
         </Row>
