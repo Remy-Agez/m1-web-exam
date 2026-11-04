@@ -322,6 +322,7 @@ describe("Bike shop API", () => {
     "page=-1",
     "page=1.5",
     "page=abc",
+    "page=1000000000000000000",
     "page=",
     "limit=0",
     "limit=51",

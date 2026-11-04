@@ -8,6 +8,8 @@ export class PaginationQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  // Beyond this the computed offset no longer fits in SQLite and the query fails
+  @Max(Number.MAX_SAFE_INTEGER)
   page: number = 1;
 
   @IsOptional()
